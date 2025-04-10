@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DashboardBase from "../DashboardBase";
 import TarjetaResumen from "../TarjetaResumen";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "./lib/supabaseClient";
 
 function ClienteDashboard() {
   const [stats, setStats] = useState({
