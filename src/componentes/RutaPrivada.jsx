@@ -1,9 +1,15 @@
-import React from "react"
-import { Navigate } from "react-router-dom"
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useUser } from '@supabase/auth-helpers-react';
 
 function RutaPrivada({ children }) {
-  const session = localStorage.getItem("session")
-  return session ? children : <Navigate to="/login" />
+  const user = useUser();
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
 }
 
-export default RutaPrivada
+export default RutaPrivada;
