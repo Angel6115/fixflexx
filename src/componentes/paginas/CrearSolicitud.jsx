@@ -1,70 +1,60 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from './lib/supabaseClient';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import supabase from "./lib/supabaseClient";
 
 function CrearSolicitud() {
-  const [descripcion, setDescripcion] = useState('');
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState('');
+  const [descripcion, setDescripcion] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [mensaje, setMensaje] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setEnviando(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await supabase.auth.getUser();
+    const cliente_id = user.data.user?.id;
 
-    if (!user) {
-      setError('Debes iniciar sesión para enviar una solicitud.');
-      setEnviando(false);
-      return;
-    }
-
-    const { error: insertError } = await supabase.from('solicitudes').insert([
+    const { data, error } = await supabase.from("solicitudes").insert([
       {
         descripcion,
-        estado: 'pendiente',
-        cliente_id: user.id,
+        categoria,
+        cliente_id,
       },
     ]);
 
-    setEnviando(false);
-
-    if (insertError) {
-      setError('Hubo un error al enviar tu solicitud.');
-      return;
+    if (error) {
+      setMensaje("Error al crear solicitud: " + error.message);
+    } else {
+      setMensaje("¡Solicitud creada exitosamente!");
+      setTimeout(() => navigate("/cliente"), 2000);
     }
-
-    navigate('/cliente');
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
-      <div className="bg-white p-8 rounded-2xl shadow-md max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          Crear nueva solicitud
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <textarea
-            required
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            placeholder="Describe tu problema o solicitud..."
-            className="w-full h-32 p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-          />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={enviando}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition"
-          >
-            {enviando ? 'Enviando...' : 'Enviar solicitud'}
-          </button>
-        </form>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4 text-center">Crear Solicitud</h2>
+        {mensaje && <p className="text-green-600 mb-4">{mensaje}</p>}
+        <input
+          type="text"
+          placeholder="Descripción"
+          className="w-full p-2 mb-2 border rounded"
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          required
+        />
+        <input
+          type="text"
+          placeholder="Categoría"
+          className="w-full p-2 mb-4 border rounded"
+          value={categoria}
+          onChange={(e) => setCategoria(e.target.value)}
+          required
+        />
+        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded w-full">
+          Enviar Solicitud
+        </button>
+      </form>
     </div>
   );
 }

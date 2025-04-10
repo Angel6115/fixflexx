@@ -1,62 +1,49 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from './lib/supabaseClient'; // ✅ RUTA CORREGIDA
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import supabase from "./lib/supabaseClient";
 
 function Register() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rol, setRol] = useState('');
-  const [error, setError] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mensaje, setMensaje] = useState("");
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError(null);
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { rol },
-      },
-    });
+    const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
-      setError(error.message);
+      setMensaje("Error al registrar: " + error.message);
     } else {
-      if (rol === 'cliente') navigate('/cliente');
-      else if (rol === 'tecnico') navigate('/tecnico');
+      setMensaje("Registro exitoso. Revisa tu correo para confirmar.");
+      setTimeout(() => navigate("/"), 3000);
     }
   };
 
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h2>Registro</h2>
-      <form onSubmit={handleRegister}>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <form onSubmit={handleRegister} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
+        <h2 className="text-xl font-bold mb-4 text-center">Registro</h2>
+        {mensaje && <p className="text-sm mb-2 text-center text-blue-600">{mensaje}</p>}
         <input
           type="email"
           placeholder="Correo electrónico"
+          className="w-full p-2 mb-2 border rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <br />
         <input
           type="password"
           placeholder="Contraseña"
+          className="w-full p-2 mb-4 border rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <br />
-        <select value={rol} onChange={(e) => setRol(e.target.value)} required>
-          <option value="">Selecciona un rol</option>
-          <option value="cliente">Cliente</option>
-          <option value="tecnico">Técnico</option>
-        </select>
-        <br />
-        <button type="submit">Registrarse</button>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded w-full">
+          Registrarse
+        </button>
       </form>
     </div>
   );

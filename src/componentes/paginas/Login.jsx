@@ -1,52 +1,47 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from './lib/supabaseClient';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import supabase from "./lib/supabaseClient";
 
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(null);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setError(error.message);
+      setErrorMsg("Credenciales inválidas");
     } else {
-      // Suponiendo que decides por el rol más adelante
-      navigate('/cliente'); // o '/tecnico' según corresponda
+      navigate("/cliente");
     }
   };
 
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h2>Iniciar sesión</h2>
-      <form onSubmit={handleLogin}>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
+        <h2 className="text-xl font-bold mb-4 text-center">Iniciar Sesión</h2>
+        {errorMsg && <p className="text-red-500 text-sm mb-2">{errorMsg}</p>}
         <input
           type="email"
           placeholder="Correo electrónico"
+          className="w-full p-2 mb-2 border rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <br />
         <input
           type="password"
           placeholder="Contraseña"
+          className="w-full p-2 mb-4 border rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <br />
-        <button type="submit">Entrar</button>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full">
+          Entrar
+        </button>
       </form>
     </div>
   );
