@@ -1,13 +1,12 @@
-import React from 'react'
-import Navbar from './Navbar'
+import React from "react"
 
 function DashboardBase({ children }) {
   return (
-    <div>
-      <Navbar />
-      <div style={{ padding: '2rem', marginLeft: '260px' }}>
-        {children}
-      </div>
+    <div style={{ padding: "2rem" }}>
+      <header>
+        <h1>Dashboard</h1>
+      </header>
+      <main>{children}</main>
     </div>
   )
 }
