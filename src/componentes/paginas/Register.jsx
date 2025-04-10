@@ -1,7 +1,7 @@
 // src/componentes/paginas/Register.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient'; // <-- asegúrate de que esta ruta sea correcta
+import { supabase } from './lib/supabaseClient'; // <-- asegúrate de que esta ruta sea correcta
 
 function Register() {
   const [email, setEmail] = useState('');
