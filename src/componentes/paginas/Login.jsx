@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -12,7 +12,7 @@ function Login() {
     e.preventDefault();
     setError(null);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -20,9 +20,8 @@ function Login() {
     if (error) {
       setError(error.message);
     } else {
-      const rol = data.user.user_metadata.rol;
-      if (rol === 'cliente') navigate('/cliente');
-      else if (rol === 'tecnico') navigate('/tecnico');
+      // Suponiendo que decides por el rol más adelante
+      navigate('/cliente'); // o '/tecnico' según corresponda
     }
   };
 
