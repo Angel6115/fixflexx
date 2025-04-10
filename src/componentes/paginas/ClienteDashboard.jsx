@@ -1,45 +1,47 @@
-import React, { useEffect, useState } from "react"
-import DashboardBase from "../DashboardBase"
-import TarjetaResumen from "../TarjetaResumen"
-import { supabase } from "../../lib/supabaseClient"
+import React, { useEffect, useState } from "react";
+import DashboardBase from "../DashboardBase";
+import TarjetaResumen from "../TarjetaResumen";
+import { supabase } from "../lib/supabaseClient";
 
 function ClienteDashboard() {
   const [stats, setStats] = useState({
     total: 0,
     pendientes: 0,
     completadas: 0,
-  })
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
-      const { data: user } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       const total = await supabase
         .from("solicitudes")
         .select("*", { count: "exact", head: true })
-        .eq("cliente_id", user.id)
+        .eq("cliente_id", user.id);
 
       const pendientes = await supabase
         .from("solicitudes")
         .select("*", { count: "exact", head: true })
         .eq("cliente_id", user.id)
-        .eq("estado", "pendiente")
+        .eq("estado", "pendiente");
 
       const completadas = await supabase
         .from("solicitudes")
         .select("*", { count: "exact", head: true })
         .eq("cliente_id", user.id)
-        .eq("estado", "completada")
+        .eq("estado", "completada");
 
       setStats({
         total: total.count,
         pendientes: pendientes.count,
         completadas: completadas.count,
-      })
-    }
+      });
+    };
 
-    fetchStats()
-  }, [])
+    fetchStats();
+  }, []);
 
   return (
     <DashboardBase>
@@ -64,7 +66,7 @@ function ClienteDashboard() {
         />
       </div>
     </DashboardBase>
-  )
+  );
 }
 
-export default ClienteDashboard
+export default ClienteDashboard;

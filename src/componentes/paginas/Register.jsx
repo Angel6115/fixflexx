@@ -1,50 +1,65 @@
-import { useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
 
-export default function Register() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
-  const navigate = useNavigate()
+function Register() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rol, setRol] = useState('');
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     const { error } = await supabase.auth.signUp({
       email,
-      password
-    })
+      password,
+      options: {
+        data: { rol },
+      },
+    });
 
     if (error) {
-      setError(error.message)
+      setError(error.message);
     } else {
-      navigate('/')
+      if (rol === 'cliente') navigate('/cliente');
+      else if (rol === 'tecnico') navigate('/tecnico');
     }
-  }
+  };
 
   return (
     <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h2>Registro técnico</h2>
+      <h2>Registro</h2>
       <form onSubmit={handleRegister}>
         <input
           type="email"
-          placeholder="Correo"
+          placeholder="Correo electrónico"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-        /><br />
+        />
+        <br />
         <input
           type="password"
           placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-        /><br />
-        <button type="submit">Registrar</button>
+        />
+        <br />
+        <select value={rol} onChange={(e) => setRol(e.target.value)} required>
+          <option value="">Selecciona un rol</option>
+          <option value="cliente">Cliente</option>
+          <option value="tecnico">Técnico</option>
+        </select>
+        <br />
+        <button type="submit">Registrarse</button>
         {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
     </div>
-  )
+  );
 }
+
+export default Register;
