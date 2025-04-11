@@ -1,46 +1,72 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import supabase from "./lib/supabaseClient";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import supabase from './lib/supabaseClient';
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    const { error, data } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
     if (error) {
-      setErrorMsg("Credenciales inválidas");
+      setMensaje('Credenciales inválidas');
+      console.error('Error:', error.message);
     } else {
-      navigate("/cliente");
+      setMensaje('Inicio de sesión exitoso ✅');
+      console.log('Usuario:', data);
+      navigate('/cliente');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
-        <h2 className="text-xl font-bold mb-4 text-center">Iniciar Sesión</h2>
-        {errorMsg && <p className="text-red-500 text-sm mb-2">{errorMsg}</p>}
-        <input
-          type="email"
-          placeholder="Correo electrónico"
-          className="w-full p-2 mb-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          className="w-full p-2 mb-4 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full">
-          Entrar
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-6 rounded shadow-md w-full max-w-sm"
+      >
+        <h2 className="text-2xl font-bold mb-4 text-center">Iniciar Sesión</h2>
+
+        {mensaje && (
+          <p className="text-center mb-4 text-red-600 font-medium">
+            {mensaje}
+          </p>
+        )}
+
+        <label className="block mb-2">
+          <span className="text-gray-700">Correo electrónico</span>
+          <input
+            type="email"
+            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </label>
+
+        <label className="block mb-4">
+          <span className="text-gray-700">Contraseña</span>
+          <input
+            type="password"
+            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </label>
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded"
+        >
+          Ingresar
         </button>
       </form>
     </div>

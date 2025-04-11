@@ -1,47 +1,71 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import supabase from "./lib/supabaseClient";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import supabase from './lib/supabaseClient';
 
 function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [mensaje, setMensaje] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    const { data, error } = await supabase.auth.signUp({ email, password });
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
     if (error) {
-      setMensaje("Error al registrar: " + error.message);
+      console.error('Error al registrar:', error.message);
+      setMensaje('Error al registrar usuario');
     } else {
-      setMensaje("Registro exitoso. Revisa tu correo para confirmar.");
-      setTimeout(() => navigate("/"), 3000);
+      console.log('Registro exitoso:', data);
+      setMensaje('Registro exitoso ✅');
+      setTimeout(() => navigate('/'), 2000); // Redirige al login
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleRegister} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
-        <h2 className="text-xl font-bold mb-4 text-center">Registro</h2>
-        {mensaje && <p className="text-sm mb-2 text-center text-blue-600">{mensaje}</p>}
-        <input
-          type="email"
-          placeholder="Correo electrónico"
-          className="w-full p-2 mb-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          className="w-full p-2 mb-4 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded w-full">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleRegister}
+        className="bg-white p-6 rounded shadow-md w-full max-w-sm"
+      >
+        <h2 className="text-2xl font-bold mb-4 text-center">Crear Cuenta</h2>
+
+        {mensaje && (
+          <p className="text-center mb-4 text-green-600 font-medium">
+            {mensaje}
+          </p>
+        )}
+
+        <label className="block mb-2">
+          <span className="text-gray-700">Correo electrónico</span>
+          <input
+            type="email"
+            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </label>
+
+        <label className="block mb-4">
+          <span className="text-gray-700">Contraseña</span>
+          <input
+            type="password"
+            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </label>
+
+        <button
+          type="submit"
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded"
+        >
           Registrarse
         </button>
       </form>
