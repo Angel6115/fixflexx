@@ -1,196 +1,170 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import supabase from './lib/supabaseClient';
 
 function CrearSolicitud() {
-  const navigate = useNavigate();
-
   const [categoria, setCategoria] = useState('');
   const [servicio, setServicio] = useState('');
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
-  const [urgencia, setUrgencia] = useState('normal');
-  const [credito, setCredito] = useState(150);
+  const [urgencia, setUrgencia] = useState('Normal');
+  const [planPago, setPlanPago] = useState('Pago único');
+  const [paraOtro, setParaOtro] = useState(false);
+  const [clienteId, setClienteId] = useState(null);
+  const [creditos, setCreditos] = useState(1500);
   const [puntos, setPuntos] = useState(80);
-  const [otroUsuario, setOtroUsuario] = useState(false);
-  const [correoUsuario, setCorreoUsuario] = useState('');
-  const [planPago, setPlanPago] = useState('1');
 
-  const categorias = {
-    'Jardinería': {
-      'Corte de césped': 120,
-      'Poda de árboles': 150,
-      'Mantenimiento general': 100,
-    },
-    'Plomería': {
-      'Cambio de fregadero': 200,
-      'Destape de tubería sanitaria': 160,
-      'Reparación de fuga de agua': 180,
-    },
-    'Electricidad': {
-      'Instalación de lámpara': 100,
-      'Reparación eléctrica básica': 180,
-      'Cambio de toma corriente': 90,
-    },
-    'Automotriz': {
-      'Cambio de batería': 150,
-      'Revisión general': 200,
-      'Cambio de aceite': 130,
+  const serviciosDisponibles = {
+    'Plomería': [
+      { nombre: 'Cambio de fregadero', precio: 200 },
+      { nombre: 'Destape de tubería sanitaria', precio: 150 }
+    ],
+    'Electricidad': [
+      { nombre: 'Instalación de lámpara', precio: 100 },
+      { nombre: 'Reparación de enchufe', precio: 80 }
+    ],
+    'Jardinería': [
+      { nombre: 'Corte de césped', precio: 120 },
+      { nombre: 'Poda de árboles', precio: 180 }
+    ],
+    'Reparación de Auto': [
+      { nombre: 'Cambio de aceite', precio: 90 },
+      { nombre: 'Cambio de frenos', precio: 250 }
+    ]
+  };
+
+  const urgenciaMultiplicadores = {
+    'Normal': 0,
+    'Servicio en 24 horas (+15%)': 0.15,
+    'Urgente (+30%)': 0.30
+  };
+
+  const planesPago = {
+    'Pago único': 1,
+    '2 Pagos': 2,
+    '4 Pagos': 4,
+    '6 Pagos': 6
+  };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setClienteId(user.id);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const getPrecioServicio = () => {
+    const servicioSeleccionado = serviciosDisponibles[categoria]?.find(s => s.nombre === servicio);
+    return servicioSeleccionado ? servicioSeleccionado.precio : 0;
+  };
+
+  const calcularCostos = () => {
+    const base = getPrecioServicio();
+    const incremento = base * (urgenciaMultiplicadores[urgencia] || 0);
+    const total = base + incremento;
+    const pagoInicial = total * 0.25;
+    const cuotas = planesPago[planPago] - 1;
+    const valorCuota = cuotas > 0 ? (total - pagoInicial) / cuotas : 0;
+    return { base, incremento, total, pagoInicial, cuotas, valorCuota };
+  };
+
+  const { base, incremento, total, pagoInicial, cuotas, valorCuota } = calcularCostos();
+
+  const enviarSolicitud = async () => {
+    if (!clienteId || !categoria || !servicio || !fecha || !hora) {
+      alert('Por favor, completa todos los campos.');
+      return;
     }
-  };
 
-  const disponibilidad = {
-    '2025-04-11': ['09:00', '11:00', '14:00'],
-    '2025-04-12': ['10:00', '13:00', '15:30'],
-    '2025-04-13': ['08:00', '12:00'],
-  };
-
-  const calcularCosto = () => {
-    const base = categorias[categoria]?.[servicio] || 0;
-    let total = base;
-    if (urgencia === 'urgente') total *= 1.3;
-    else if (urgencia === '24h') total *= 1.15;
-    return total;
-  };
-
-  const calcularPagoInicial = () => calcularCosto() * 0.15;
-
-  const calcularCuotas = () => {
-    const total = calcularCosto();
-    const restante = total - calcularPagoInicial();
-    const cuotas = parseInt(planPago);
-    return cuotas > 1 ? (restante / (cuotas - 1)).toFixed(2) : 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const costo = calcularCosto();
-    const pagoInicial = calcularPagoInicial();
-
-    const { data, error } = await supabase.from('solicitudes').insert([
+    const { error } = await supabase.from('solicitudes').insert([
       {
+        cliente_id: clienteId,
         categoria,
         servicio,
         fecha,
         hora,
         urgencia,
-        costo,
         plan_pago: planPago,
+        costo_total: total,
         pago_inicial: pagoInicial,
-        para_otra_persona: otroUsuario,
-        correo_usuario: correoUsuario || null,
-      },
+        estado: 'pendiente',
+        para_otro: paraOtro
+      }
     ]);
 
-    if (!error) navigate('/cliente');
-    else console.error('Error:', error);
+    if (error) {
+      console.error('Error al enviar solicitud:', error.message);
+      alert('Hubo un problema al enviar la solicitud');
+    } else {
+      alert('Solicitud enviada exitosamente 🎉');
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-4xl font-bold mb-6 text-center text-blue-700 flex items-center justify-center gap-2">
-        <img src="/logoFixFlexx.jpg" alt="logo" className="w-12 h-12" /> FixFlexx - Crear Solicitud
-      </h1>
+    <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md">
+      <h2 className="text-2xl font-bold text-center text-purple-700 mb-4">Crear Solicitud</h2>
 
-      <div className="mb-6 p-4 bg-gray-100 rounded flex justify-between">
-        <p>⭐ Puntos: <strong>{puntos}</strong></p>
-        <p>💰 Crédito disponible: <strong>${credito.toFixed(2)}</strong></p>
+      <div className="text-sm text-gray-700 mb-4 flex justify-between">
+        <span>⭐ Puntos: {puntos}</span>
+        <span>💰 Crédito disponible: ${creditos.toFixed(2)}</span>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="block text-sm font-semibold mb-1">Categoría</label>
-          <select value={categoria} onChange={(e) => { setCategoria(e.target.value); setServicio(''); }} required className="w-full border p-2 rounded shadow-sm">
-            <option value="">Seleccione categoría...</option>
-            {Object.keys(categorias).map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
+      <div className="space-y-4">
+        <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="w-full p-2 border rounded">
+          <option value="">Seleccione categoría...</option>
+          {Object.keys(serviciosDisponibles).map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
 
-        {categoria && (
-          <div>
-            <label className="block text-sm font-semibold mb-1">Tipo de servicio</label>
-            <select value={servicio} onChange={(e) => setServicio(e.target.value)} required className="w-full border p-2 rounded shadow-sm">
-              <option value="">Seleccione...</option>
-              {Object.keys(categorias[categoria]).map((tipo) => (
-                <option key={tipo} value={tipo}>{tipo} - ${categorias[categoria][tipo]}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        <select value={servicio} onChange={(e) => setServicio(e.target.value)} className="w-full p-2 border rounded">
+          <option value="">Seleccione servicio...</option>
+          {(serviciosDisponibles[categoria] || []).map(s => (
+            <option key={s.nombre} value={s.nombre}>
+              {s.nombre} - ${s.precio}
+            </option>
+          ))}
+        </select>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold mb-1">Fecha disponible</label>
-            <select value={fecha} onChange={(e) => { setFecha(e.target.value); setHora(''); }} required className="w-full border p-2 rounded shadow-sm">
-              <option value="">Seleccione fecha...</option>
-              {Object.keys(disponibilidad).map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-          </div>
+        <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-full p-2 border rounded" />
+        <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="w-full p-2 border rounded" />
 
-          <div>
-            <label className="block text-sm font-semibold mb-1">Hora disponible</label>
-            <select value={hora} onChange={(e) => setHora(e.target.value)} required className="w-full border p-2 rounded shadow-sm">
-              <option value="">Seleccione hora...</option>
-              {fecha && disponibilidad[fecha].map((h) => (
-                <option key={h} value={h}>{h}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <select value={urgencia} onChange={(e) => setUrgencia(e.target.value)} className="w-full p-2 border rounded">
+          {Object.keys(urgenciaMultiplicadores).map(u => (
+            <option key={u} value={u}>{u}</option>
+          ))}
+        </select>
 
-        <div>
-          <label className="block text-sm font-semibold mb-1">Nivel de urgencia</label>
-          <select value={urgencia} onChange={(e) => setUrgencia(e.target.value)} className="w-full border p-2 rounded shadow-sm">
-            <option value="normal">Normal</option>
-            <option value="24h">Servicio en 24 horas (+15%)</option>
-            <option value="urgente">Urgente (+30%)</option>
-          </select>
-        </div>
+        <select value={planPago} onChange={(e) => setPlanPago(e.target.value)} className="w-full p-2 border rounded">
+          {Object.keys(planesPago).map(p => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
 
-        <div>
-          <label className="block text-sm font-semibold mb-1">Plan de pago</label>
-          <select value={planPago} onChange={(e) => setPlanPago(e.target.value)} className="w-full border p-2 rounded shadow-sm">
-            <option value="1">Pago único</option>
-            <option value="2">2 pagos (quincenales)</option>
-            <option value="3">3 pagos mensuales</option>
-            <option value="4">4 pagos mensuales</option>
-            <option value="6">6 pagos mensuales</option>
-          </select>
-        </div>
+        <label className="flex items-center text-sm gap-2">
+          <input type="checkbox" checked={paraOtro} onChange={() => setParaOtro(!paraOtro)} />
+          Solicitar para otra persona
+        </label>
 
-        <div>
-          <label className="inline-flex items-center">
-            <input type="checkbox" checked={otroUsuario} onChange={(e) => setOtroUsuario(e.target.checked)} className="mr-2" />
-            ¿Solicitar para otra persona?
-          </label>
-          {otroUsuario && (
-            <input
-              type="email"
-              value={correoUsuario}
-              onChange={(e) => setCorreoUsuario(e.target.value)}
-              placeholder="Correo electrónico del usuario"
-              className="w-full border p-2 rounded mt-2 shadow-sm"
-              required
-            />
+        <div className="bg-blue-50 p-4 rounded text-sm text-gray-800 border">
+          <p><strong>Costo del servicio:</strong> ${base.toFixed(2)}</p>
+          <p><strong>Fee por urgencia:</strong> ${incremento.toFixed(2)}</p>
+          <p><strong>Total a pagar:</strong> ${total.toFixed(2)}</p>
+          <p><strong>Pago inicial obligatorio (25%):</strong> ${pagoInicial.toFixed(2)}</p>
+          {cuotas > 0 && (
+            <p><strong>Cuotas:</strong> {cuotas} pagos de ${valorCuota.toFixed(2)}</p>
           )}
         </div>
 
-        <div className="p-4 bg-blue-50 rounded text-blue-900 border border-blue-300">
-          <p><strong>Costo total:</strong> ${calcularCosto().toFixed(2)}</p>
-          <p><strong>Pago inicial obligatorio (15%):</strong> ${calcularPagoInicial().toFixed(2)}</p>
-          {parseInt(planPago) > 1 && (
-            <p><strong>Pagos restantes ({parseInt(planPago) - 1}):</strong> ${calcularCuotas()} c/u</p>
-          )}
-        </div>
-
-        <button type="submit" className="w-full bg-blue-700 text-white p-3 rounded-lg hover:bg-blue-800 transition text-lg font-medium">
-          Enviar solicitud
+        <button
+          onClick={enviarSolicitud}
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded"
+        >
+          Enviar Solicitud
         </button>
-      </form>
+      </div>
     </div>
   );
 }
