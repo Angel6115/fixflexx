@@ -1,187 +1,143 @@
-import React, { useState, useEffect } from 'react';
-import supabase from './lib/supabaseClient';
+import React, { useState, useEffect } from "react";
 
-function CrearSolicitud() {
-  const [categoria, setCategoria] = useState('');
-  const [servicio, setServicio] = useState('');
+const CrearSolicitud = () => {
+  const [servicio, setServicio] = useState(0);
+  const [cuotas, setCuotas] = useState(1);
+  const [solicitarOtraPersona, setSolicitarOtraPersona] = useState(false);
+  const [email, setEmail] = useState('');
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
-  const [urgencia, setUrgencia] = useState('Normal');
-  const [planPago, setPlanPago] = useState('Pago único');
-  const [paraOtro, setParaOtro] = useState(false);
-  const [emailOtro, setEmailOtro] = useState('');
-  const [metodoPago, setMetodoPago] = useState('Cuenta de banco');
-  const [creditos, setCreditos] = useState(1500);
-  const [puntos, setPuntos] = useState(80);
-  const [clienteId, setClienteId] = useState(null);
+  const [estadoSolicitud, setEstadoSolicitud] = useState('pendiente');
+  const [puntos, setPuntos] = useState(80); // Inicializando con 80 puntos disponibles
+  const [creditoDisponible, setCreditoDisponible] = useState(1500); // Crédito inicial
+  const [totalAPagar, setTotalAPagar] = useState(0);
+  const [pagoInicial, setPagoInicial] = useState(0);
+  const [cuota, setCuota] = useState(0);
 
-  const serviciosDisponibles = {
-    'Plomería': [
-      { nombre: 'Cambio de fregadero', precio: 200 },
-      { nombre: 'Destape de tubería sanitaria', precio: 150 }
-    ],
-    'Electricidad': [
-      { nombre: 'Instalación de lámpara', precio: 100 },
-      { nombre: 'Reparación de enchufe', precio: 80 }
-    ],
-    'Jardinería': [
-      { nombre: 'Corte de césped', precio: 120 },
-      { nombre: 'Poda de árboles', precio: 180 }
-    ],
-    'Reparación de Auto': [
-      { nombre: 'Cambio de aceite', precio: 90 },
-      { nombre: 'Cambio de frenos', precio: 250 }
-    ]
-  };
-
-  const urgenciaMultiplicadores = {
-    'Normal': 0,
-    'Servicio en 24 horas (+15%)': 0.15,
-    'Urgente (+30%)': 0.30
-  };
-
-  const planesPago = {
-    'Pago único': 1,
-    '2 Pagos': 2,
-    '4 Pagos': 4,
-    '6 Pagos': 6
+  const calcularPago = () => {
+    const total = servicio * 1.15; // Aplicar fee si aplica
+    const pagoInicial = total * 0.25; // Pago inicial del 25%
+    const cuota = (total - pagoInicial) / cuotas;
+    setTotalAPagar(total);
+    setPagoInicial(pagoInicial);
+    setCuota(cuota);
   };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) setClienteId(user.id);
-    };
-    fetchUser();
-  }, []);
+    if (servicio > 0) {
+      calcularPago();
+    }
+  }, [servicio, cuotas]);
 
-  const getPrecioServicio = () => {
-    const servicioSeleccionado = serviciosDisponibles[categoria]?.find(s => s.nombre === servicio);
-    return servicioSeleccionado ? servicioSeleccionado.precio : 0;
+  const acumularPuntos = () => {
+    setPuntos(puntos + 10); // Por ejemplo, sumar 10 puntos por cada servicio solicitado
   };
 
-  const calcularCostos = () => {
-    const base = getPrecioServicio();
-    const incremento = urgenciaMultiplicadores[urgencia] || 0;
-    const total = base + (base * incremento);
-    const inicial = total * 0.25;
-    const cuotas = planPago !== 'Pago único' ? planesPago[planPago] - 1 : 0;
-    const cuota = cuotas > 0 ? (total - inicial) / cuotas : 0;
-    return { base, incremento: base * incremento, total, inicial, cuotas, cuota };
+  const obtenerProgreso = () => {
+    switch (estadoSolicitud) {
+      case 'pendiente':
+        return 0;
+      case 'aceptado':
+        return 50;
+      case 'en_proceso':
+        return 100;
+      default:
+        return 0;
+    }
   };
 
-  const { base, incremento, total, inicial, cuotas, cuota } = calcularCostos();
-
-  const enviarSolicitud = async () => {
-    if (!clienteId || !categoria || !servicio || !fecha || !hora) {
-      alert('Por favor completa todos los campos.');
+  const handleEnviarSolicitud = () => {
+    if (totalAPagar > creditoDisponible) {
+      alert("No tienes suficiente crédito disponible.");
       return;
     }
-
-    const { error } = await supabase.from('solicitudes').insert([
-      {
-        cliente_id: clienteId,
-        categoria,
-        servicio,
-        fecha,
-        hora,
-        urgencia,
-        plan_pago: planPago,
-        costo_total: total,
-        pago_inicial: inicial,
-        estado: 'pendiente',
-        para_otro: paraOtro,
-        created_at: new Date().toISOString(),
-        metodo_pago: metodoPago,
-        email_otro: paraOtro ? emailOtro : null
-      }
-    ]);
-
-    if (error) {
-      console.error('Error al enviar solicitud:', error);
-      alert('Hubo un problema al enviar la solicitud');
-    } else {
-      setCreditos(creditos - inicial);
-      alert('Solicitud enviada exitosamente 🎉');
-    }
+    // Aquí se podría integrar una lógica para enviar la solicitud
+    alert("Solicitud enviada con éxito!");
+    acumularPuntos(); // Sumar puntos al enviar la solicitud
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 bg-white rounded-xl shadow-md text-sm">
-      <h1 className="text-center text-xl font-bold text-purple-700 mb-4">Crear Solicitud</h1>
-      <div className="text-xs text-gray-600 mb-4 flex justify-between">
-        <span>⭐ Puntos: {puntos}</span>
-        <span>💰 Crédito disponible: ${creditos.toFixed(2)}</span>
+    <div>
+      <h2>🌟 Puntos: {puntos} | 💰 Crédito Disponible: ${creditoDisponible}</h2>
+      <h3>Crear Solicitud</h3>
+
+      {/* Selección de Servicio */}
+      <label>Selección de Categoría:</label>
+      <select onChange={(e) => setServicio(parseFloat(e.target.value))}>
+        <option value="0">Reparación de Auto</option>
+        <option value="90">Cambio de aceite</option>
+        <option value="250">Cambio de frenos</option>
+      </select>
+
+      <label>Fecha de Servicio:</label>
+      <input
+        type="date"
+        value={fecha}
+        onChange={(e) => setFecha(e.target.value)}
+      />
+
+      <label>Hora de Servicio:</label>
+      <input
+        type="time"
+        value={hora}
+        onChange={(e) => setHora(e.target.value)}
+      />
+
+      <label>Cuotas:</label>
+      <select onChange={(e) => setCuotas(parseInt(e.target.value))}>
+        <option value="1">1 Pago</option>
+        <option value="2">2 Pagos</option>
+        <option value="3">3 Pagos</option>
+        <option value="4">4 Pagos</option>
+        <option value="5">5 Pagos</option>
+        <option value="6">6 Pagos</option>
+      </select>
+
+      {/* Muestra de Cálculos */}
+      <div>
+        <label>Costo del servicio:</label> ${totalAPagar.toFixed(2)}
+        <br />
+        <label>Pago inicial obligatorio:</label> ${pagoInicial.toFixed(2)}
+        <br />
+        <label>Cuotas:</label> {cuotas} pagos de ${cuota.toFixed(2)}
       </div>
 
-      <div className="space-y-3">
-        <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="w-full p-2 border rounded">
-          <option value="">Seleccione categoría...</option>
-          {Object.keys(serviciosDisponibles).map(cat => (
-            <option key={cat}>{cat}</option>
-          ))}
-        </select>
+      {/* Solicitar para otra persona */}
+      <label>Solicitar para otra persona:</label>
+      <input
+        type="checkbox"
+        checked={solicitarOtraPersona}
+        onChange={() => setSolicitarOtraPersona(!solicitarOtraPersona)}
+      />
+      {solicitarOtraPersona && (
+        <input
+          type="email"
+          placeholder="Email del usuario"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      )}
 
-        <select value={servicio} onChange={(e) => setServicio(e.target.value)} className="w-full p-2 border rounded">
-          <option value="">Seleccione servicio...</option>
-          {(serviciosDisponibles[categoria] || []).map(s => (
-            <option key={s.nombre}>{s.nombre} - ${s.precio}</option>
-          ))}
-        </select>
+      {/* Barra de Progreso */}
+      <div style={{ width: `${obtenerProgreso()}%`, backgroundColor: 'green', height: '5px' }}></div>
 
-        <div className="flex gap-2">
-          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-1/2 p-2 border rounded" />
-          <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="w-1/2 p-2 border rounded" />
+      <br />
+      <button onClick={handleEnviarSolicitud}>Enviar Solicitud</button>
+
+      {/* Notificación de seguridad si la persona es mujer */}
+      <label>¿Es mujer?</label>
+      <input
+        type="checkbox"
+        checked={esMujer}
+        onChange={() => setEsMujer(!esMujer)}
+      />
+      {esMujer && (
+        <div>
+          <strong>Notificación de seguridad:</strong> Alguien está realizando un trabajo en su hogar.
         </div>
-
-        <select value={urgencia} onChange={(e) => setUrgencia(e.target.value)} className="w-full p-2 border rounded">
-          {Object.keys(urgenciaMultiplicadores).map(u => (
-            <option key={u}>{u}</option>
-          ))}
-        </select>
-
-        <select value={planPago} onChange={(e) => setPlanPago(e.target.value)} className="w-full p-2 border rounded">
-          {Object.keys(planesPago).map(p => (
-            <option key={p}>{p}</option>
-          ))}
-        </select>
-
-        <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} className="w-full p-2 border rounded">
-          <option>Cuenta de banco</option>
-          <option>Tarjeta de débito</option>
-        </select>
-
-        <label className="flex items-center space-x-2">
-          <input type="checkbox" checked={paraOtro} onChange={() => setParaOtro(!paraOtro)} />
-          <span>Solicitar para otra persona</span>
-        </label>
-
-        {paraOtro && (
-          <input
-            type="email"
-            value={emailOtro}
-            onChange={(e) => setEmailOtro(e.target.value)}
-            placeholder="Correo de la otra persona"
-            className="w-full p-2 border rounded"
-          />
-        )}
-
-        <div className="bg-blue-50 border rounded p-3 text-xs text-gray-800">
-          <p><strong>Costo del servicio:</strong> ${base.toFixed(2)}</p>
-          <p><strong>Fee por urgencia:</strong> ${incremento.toFixed(2)}</p>
-          <p><strong>Total a pagar:</strong> ${total.toFixed(2)}</p>
-          <p><strong>Pago inicial obligatorio (25%):</strong> ${inicial.toFixed(2)}</p>
-          {cuotas > 0 && (
-            <p><strong>Cuotas:</strong> {cuotas} pagos de ${cuota.toFixed(2)}</p>
-          )}
-        </div>
-
-        <button onClick={enviarSolicitud} className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded">
-          Enviar Solicitud
-        </button>
-      </div>
+      )}
     </div>
   );
-}
+};
 
 export default CrearSolicitud;
