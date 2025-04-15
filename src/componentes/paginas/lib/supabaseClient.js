@@ -1,7 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://bvpxvhqggjqatflmackr.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2cHh2aHFnZ2pxYXRmbG1hY2tyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3ODU0MjAsImV4cCI6MjA1OTM2MTQyMH0.HpmoQ8uikfrb3uo9Mssx543jy75xdFLUZLrN-w-QaPk';
+// Usando variables de entorno para la clave y URL (deberías configurar estas variables en tu archivo .env)
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Faltan las variables de entorno para la URL y la clave de Supabase");
+}
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
