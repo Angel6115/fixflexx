@@ -13,7 +13,9 @@ const CrearSolicitud = () => {
   const [totalAPagar, setTotalAPagar] = useState(0);
   const [pagoInicial, setPagoInicial] = useState(0);
   const [cuota, setCuota] = useState(0);
+  const [esMujer, setEsMujer] = useState(false); // Para verificar si es mujer
 
+  // Calcular los pagos (total, pago inicial, cuota)
   const calcularPago = () => {
     const total = servicio * 1.15; // Aplicar fee si aplica
     const pagoInicial = total * 0.25; // Pago inicial del 25%
@@ -29,10 +31,12 @@ const CrearSolicitud = () => {
     }
   }, [servicio, cuotas]);
 
+  // Acumular puntos
   const acumularPuntos = () => {
     setPuntos(puntos + 10); // Por ejemplo, sumar 10 puntos por cada servicio solicitado
   };
 
+  // Obtener el progreso de la solicitud
   const obtenerProgreso = () => {
     switch (estadoSolicitud) {
       case 'pendiente':
@@ -46,12 +50,17 @@ const CrearSolicitud = () => {
     }
   };
 
+  // Manejar el envío de la solicitud
   const handleEnviarSolicitud = () => {
     if (totalAPagar > creditoDisponible) {
       alert("No tienes suficiente crédito disponible.");
       return;
     }
-    // Aquí se podría integrar una lógica para enviar la solicitud
+    if (solicitarOtraPersona && !email) {
+      alert("Por favor, ingresa un email para la otra persona.");
+      return;
+    }
+    // Aquí se podría integrar una lógica para enviar la solicitud a la base de datos
     alert("Solicitud enviada con éxito!");
     acumularPuntos(); // Sumar puntos al enviar la solicitud
   };

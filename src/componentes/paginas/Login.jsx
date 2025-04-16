@@ -6,28 +6,33 @@ function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mensaje, setMensaje] = useState('');
-  const [isLoading, setIsLoading] = useState(false);  // Para indicar cuando se está cargando
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    setIsLoading(true);  // Activar carga
+    // Mostrar mensaje de espera
+    setMensaje('Verificando credenciales...');
 
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    setIsLoading(false);  // Desactivar carga
+      if (error) {
+        setMensaje('Credenciales inválidas');
+        console.error('Error de autenticación:', error.message);
+      } else {
+        setMensaje('Inicio de sesión exitoso ✅');
+        console.log('Usuario autenticado:', data);
 
-    if (error) {
-      setMensaje('Credenciales inválidas');
-      console.error('Error:', error.message);
-    } else {
-      setMensaje('Inicio de sesión exitoso ✅');
-      console.log('Usuario:', data);
-      navigate('/cliente'); // Redirige al cliente
+        // Redirigir al dashboard del cliente si la autenticación es exitosa
+        navigate('/cliente');
+      }
+    } catch (error) {
+      setMensaje('Hubo un error al iniciar sesión');
+      console.error('Error inesperado:', error);
     }
   };
 
@@ -39,11 +44,8 @@ function Login() {
       >
         <h2 className="text-2xl font-bold mb-4 text-center">Iniciar Sesión</h2>
 
-        {/* Mostrar mensaje */}
         {mensaje && (
-          <p className={`text-center mb-4 ${mensaje.includes('inválidas') ? 'text-red-600' : 'text-green-600'} font-medium`}>
-            {mensaje}
-          </p>
+          <p className="text-center mb-4 text-red-600 font-medium">{mensaje}</p>
         )}
 
         <label className="block mb-2">
@@ -71,9 +73,8 @@ function Login() {
         <button
           type="submit"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded"
-          disabled={isLoading}  // Desactivar botón mientras carga
         >
-          {isLoading ? 'Cargando...' : 'Ingresar'}
+          Ingresar
         </button>
       </form>
     </div>

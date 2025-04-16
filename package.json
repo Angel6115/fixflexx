@@ -1,25 +1,37 @@
 {
     "name": "fixflexx",
     "version": "1.0.0",
-    "scripts": {
-        "dev": "vite",
-        "build": "vite build",
-        "preview": "vite preview"
-    },
+    "private": true,
     "dependencies": {
-        "@supabase/supabase-js": "^2.39.7",
-        "lucide-react": "^0.487.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "react-router-dom": "^6.22.3"
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "react-router-dom": "^6.22.3",
+      "supabase-js": "^2.49.4",
+      "vite": "^5.4.17",
+      "tailwindcss": "^3.4.17"
     },
-    "devDependencies": {
-        "@tailwindcss/postcss7-compat": "^2.2.17",
-        "@vitejs/plugin-react": "^4.3.4",
-        "autoprefixer": "^10.4.16",
-        "postcss": "^8.4.32",
-        "tailwindcss": "^3.4.1",
-        "vite": "^5.1.0",
-        "vite-plugin-pwa": "^1.0.0"
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview"
+    },
+    "eslintConfig": {
+      "extends": [
+        "react-app",
+        "react-app/jest"
+      ]
+    },
+    "browserslist": {
+      "production": [
+        ">0.2%",
+        "not dead",
+        "not op_mini all"
+      ],
+      "development": [
+        "last 1 chrome version",
+        "last 1 firefox version",
+        "last 1 safari version"
+      ]
     }
-}
+  }
+  
