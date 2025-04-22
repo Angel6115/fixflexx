@@ -1,122 +1,74 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-const CrearSolicitud = () => {
-  const [creditoDisponible, setCreditoDisponible] = useState(1500);
-  const [montoTotal, setMontoTotal] = useState(0);
-  const [servicioSeleccionado, setServicioSeleccionado] = useState({});
-  const [pagosSeleccionados, setPagosSeleccionados] = useState(1);
-  const [cuotasMeses, setCuotasMeses] = useState([]);
-  const [esMujer, setEsMujer] = useState(false);
-  const [estadoTrabajo, setEstadoTrabajo] = useState('Pendiente');
-  
-  const verificarCredito = () => {
-    if (creditoDisponible < montoTotal) {
-      const respuesta = window.confirm("Tu crédito disponible es bajo. ¿Te gustaría solicitar más crédito?");
-      if (respuesta) {
-        alert("Tu solicitud de crédito está en proceso.");
-        setCreditoDisponible(creditoDisponible + 500); // Ejemplo de aumento de crédito
-      }
-    }
+function ClienteDashboard() {
+  const [servicio, setServicio] = useState('Normal');
+  const [pagos, setPagos] = useState(1);
+
+  const calcularCosto = () => {
+    const base = 0;
+    const incremento = 0;
+    const total = base + incremento;
+    const inicial = total * 0.25;
+    const cuota = (total - inicial) / pagos;
+    return { base, incremento, total, inicial, cuota };
   };
 
-  const manejarServicioUrgente = () => {
-    if (servicioSeleccionado.tipo === "Urgente") {
-      setFechaServicio(new Date()); // Fecha actual
-      alert("Servicio urgente seleccionado. El técnico te indicará la hora aproximada.");
-    }
+  const { base, incremento, total, inicial, cuota } = calcularCosto();
+
+  const enviarSolicitud = (e) => {
+    e.preventDefault();
+    console.log("Solicitud enviada");
   };
-
-  const calcularCuotas = () => {
-    const cantidadCuotas = pagosSeleccionados;
-    const cuota = montoTotal / cantidadCuotas;
-    setCuotasMeses(Array.from({ length: cantidadCuotas }, (_, index) => ({
-      mes: `Mes ${index + 1}`,
-      monto: cuota
-    })));
-  };
-
-  const notificacionSeguridad = () => {
-    if (esMujer) {
-      const respuesta = prompt("¿A quién te gustaría notificar sobre este servicio?");
-      alert(`Notificación enviada a ${respuesta}. ¡Es una medida de seguridad!`);
-    }
-  };
-
-  const enviarRecordatorio = () => {
-    alert("Recuerda que puedes comunicarte con el técnico por texto o llamada. ¡El trabajo está por comenzar!");
-  };
-
-  const mostrarNotificacionSeguridad = () => {
-    if (esMujer) {
-      return (
-        <div className="notificacion-seguridad">
-          <span role="img" aria-label="seguridad">🛡️</span> ¡Notificación de seguridad activa!
-        </div>
-      );
-    }
-    return null;
-  };
-
-  useEffect(() => {
-    verificarCredito();
-  }, [montoTotal]);
-
-  useEffect(() => {
-    manejarServicioUrgente();
-  }, [servicioSeleccionado]);
-
-  useEffect(() => {
-    calcularCuotas();
-  }, [pagosSeleccionados, montoTotal]);
-
-  useEffect(() => {
-    notificacionSeguridad();
-  }, [esMujer]);
-
-  useEffect(() => {
-    if (estadoTrabajo === "Iniciado") {
-      enviarRecordatorio();
-    }
-  }, [estadoTrabajo]);
 
   return (
-    <div>
-      {mostrarNotificacionSeguridad()}
-      <form>
+    <div className="max-w-xl mx-auto p-6 bg-white shadow rounded">
+      <h2 className="text-lg font-bold mb-4">Bienvenido al Dashboard del Cliente</h2>
+      <form onSubmit={enviarSolicitud} className="space-y-4">
         <div>
-          <label>Selecciona el servicio:</label>
+          <label className="block text-sm font-medium">Selecciona el servicio:</label>
           <select
-            onChange={(e) => setServicioSeleccionado({ tipo: e.target.value })}
+            value={servicio}
+            onChange={(e) => setServicio(e.target.value)}
+            className="w-full border p-2 rounded"
           >
             <option value="Normal">Normal</option>
-            <option value="Urgente">Urgente (24 horas)</option>
+            <option value="Urgente">Urgente</option>
           </select>
         </div>
 
         <div>
-          <label>Selecciona el número de pagos:</label>
-          <select onChange={(e) => setPagosSeleccionados(e.target.value)}>
-            <option value="1">1 pago</option>
-            <option value="2">2 pagos</option>
-            <option value="3">3 pagos</option>
-            <option value="6">6 pagos</option>
+          <label className="block text-sm font-medium">Selecciona el número de pagos:</label>
+          <select
+            value={pagos}
+            onChange={(e) => setPagos(parseInt(e.target.value))}
+            className="w-full border p-2 rounded"
+          >
+            <option value={1}>1 pago</option>
+            <option value={2}>2 pagos</option>
+            <option value={3}>3 pagos</option>
           </select>
         </div>
 
-        <div>
-          <button type="submit">Enviar Solicitud</button>
+        <div className="bg-gray-100 p-4 rounded text-sm">
+          <p><strong>Costo del servicio:</strong> ${base}</p>
+          <p><strong>Incremento por urgencia:</strong> ${incremento}</p>
+          <p><strong>Total a pagar:</strong> ${total}</p>
+          <p><strong>Pago inicial obligatorio (25%):</strong> ${inicial}</p>
+          <p><strong>Cuotas:</strong></p>
+          {[...Array(pagos - 1)].map((_, i) => (
+            <p key={i}>Mes {i + 1}: ${cuota}</p>
+          ))}
         </div>
+
+        <button
+          type="submit"
+          className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
+        >
+          Enviar Solicitud
+        </button>
       </form>
-
-      <div>
-        <p>Costo del servicio: ${montoTotal}</p>
-        <p>Pago inicial obligatorio (25%): ${montoTotal * 0.25}</p>
-        <p>Cuotas: {cuotasMeses.map((cuota) => (
-          <div key={cuota.mes}>{cuota.mes}: ${cuota.monto}</div>
-        ))}</p>
-      </div>
     </div>
   );
-};
+}
 
-export default CrearSolicitud;
+export default ClienteDashboard;

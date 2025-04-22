@@ -2,77 +2,59 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from './lib/supabaseClient';
 
-function Login() {
+function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [mensaje, setMensaje] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
 
-    // Mostrar mensaje de espera
-    setMensaje('Verificando credenciales...');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-    try {
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setMensaje('Credenciales inválidas');
-        console.error('Error de autenticación:', error.message);
-      } else {
-        setMensaje('Inicio de sesión exitoso ✅');
-        console.log('Usuario autenticado:', data);
-
-        // Redirigir al dashboard del cliente si la autenticación es exitosa
-        navigate('/cliente');
-      }
-    } catch (error) {
-      setMensaje('Hubo un error al iniciar sesión');
-      console.error('Error inesperado:', error);
+    if (error) {
+      setError('Credenciales inválidas o error de autenticación.');
+      console.error('Login error:', error);
+    } else {
+      console.log('Usuario autenticado: ', data);
+      onLogin(); // <-- Activa estado de login en App.jsx
+      navigate('/cliente'); // <-- Redirige al dashboard
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-6 rounded shadow-md w-full max-w-sm"
-      >
-        <h2 className="text-2xl font-bold mb-4 text-center">Iniciar Sesión</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <form onSubmit={handleLogin} className="bg-white p-8 rounded shadow-md w-96">
+        <h2 className="text-2xl font-bold text-center text-blue-600 mb-4">Iniciar Sesión</h2>
 
-        {mensaje && (
-          <p className="text-center mb-4 text-red-600 font-medium">{mensaje}</p>
-        )}
+        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
-        <label className="block mb-2">
-          <span className="text-gray-700">Correo electrónico</span>
-          <input
-            type="email"
-            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-2 mb-4 border rounded"
+          required
+        />
 
-        <label className="block mb-4">
-          <span className="text-gray-700">Contraseña</span>
-          <input
-            type="password"
-            className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-2 mb-4 border rounded"
+          required
+        />
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition duration-200"
         >
           Ingresar
         </button>
