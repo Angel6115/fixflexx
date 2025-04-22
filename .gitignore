@@ -1,25 +1,25 @@
-# Node.js dependencies
+# node_modules y entornos
 node_modules/
-
-# .env file where sensitive information is stored
 .env
-
-# Log files
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-
-# Build output
-/dist
-/build
-/.next
-
-# Vercel deployment
-.vercel/
-
-# MacOS system files
+.env.local
 .DS_Store
 
-# VS Code settings
+# Vite
+dist/
+.vite/
+
+# Vercel
+.vercel/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs y editores
 .vscode/
-node_modules
+.idea/
+
+# Sistema
+Thumbs.db

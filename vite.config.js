@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: './', // 🔥 Esto es necesario para que Vercel sirva bien los assets
   plugins: [
     react(),
     VitePWA({
